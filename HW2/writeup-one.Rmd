@@ -1,0 +1,118 @@
+---
+title: "writeup_one"
+author: "Tian Tan"
+date: "February 20, 2016"
+output: pdf_document
+---
+Part One: Numerical Stability
+
+1.Polyfunction
+```{r}
+polyfunction<-function(x,vec,type){
+  len=length(vec)
+  if (type=="direct"){
+    f=0
+    for (i in 1:len){
+      f=f+(x**(i-1))*vec[i]
+    }
+  }
+  if (type=="horner"){
+    if (len==1){
+      f=vec[1]
+    } else{
+      f=vec[1]+x*polyfunction(x,vec[-1],type)
+    }
+  }
+  if (type=="factor"){
+    f=vec[1]
+    for (i in 2:len){
+      f=f*(x-vec[i])
+    }     
+  }
+  return (f)
+}
+```
+
+2.Comparison of methods
+```{r}
+point1=seq(0.999,1.001,(1.001-0.999)/100)
+point2=seq(0.99,1.01,(1.01-0.99)/100)
+point3=seq(0.9,1.1,(1.1-0.9)/100)
+
+avec=c(-1,9,-36,84,-126,126,-84,36,-9,1)
+rvec=c(1,1,1,1,1,1,1,1,1,1)
+
+plot(point1,polyfunction(point1,avec,"direct"),xlab="interval[0.999,1.001]",
+     ylab="results",main="Interval[0.999,1.001]",col="BLACK",type="l")
+lines(point1,polyfunction(point1,avec,"horner"),col="RED")
+lines(point1,polyfunction(point1,rvec,"factor"),col="BLUE")
+legend("topleft",c("direct","horner","factor"),lty=c(1,1),
+       lwd=c(2.5,2.5),col=c("BLACK","RED","BLUE"))
+
+plot(point2,polyfunction(point2,avec,"direct"),xlab="interval[0.999,1.001]",
+     ylab="results",main="Interval[0.99,1.01]",col="BLACK",type="l")
+lines(point2,polyfunction(point2,avec,"horner"),col="RED")
+lines(point2,polyfunction(point2,rvec,"factor"),col="BLUE")
+legend("topleft",c("direct","horner","factor"),lty=c(1,1),
+       lwd=c(2.5,2.5),col=c("BLACK","RED","BLUE"))
+
+plot(point3,polyfunction(point3,avec,"direct"),xlab="interval[0.999,1.001]",
+     ylab="results",main="Interval[0.9,1.1]",col="BLACK",type="l")
+lines(point3,polyfunction(point3,avec,"horner"),col="RED")
+lines(point3,polyfunction(point3,rvec,"factor"),col="BLUE")
+legend("topleft",c("direct","horner","factor"),lty=c(1,1),
+       lwd=c(2.5,2.5),col=c("BLACK","RED","BLUE"))
+```
+Direct method: the results are randomly distributed in the plot, corresponding to interval[0.999,1.001] and interval[0.99,1.01]; In respond to interval[0.9,1.1], the data first increases linearly, then becomes flat as grids increase, then increases linearly at last.
+Horner method: the three results are pretty similar to the direct method. Data is randomly distributed when interval is [0.999,1.001] and [0.99,1.01]; When interval is [0.9,1.1], data increases linearly first, then becomes flat, finally increases linearly.  
+Factor method: the data always increases linearly first, becomes flat later, then increases linearly in the end. 
+
+3.Root Finding
+```{r}
+results=rep(0,101)
+
+for (a in 1:(length(point2))){
+  results[a]=polyfunction(point2[a],avec,"direct")
+}
+
+for (i in 2:101){
+  if (results[i-1]*results[i]<0){
+    root=(point2[i-1]+point2[i])/2
+    print (root)
+  }
+  if (results[i]==0){
+    print(point2[i])
+  }
+}
+
+
+for (a in 1:(length(point2))){
+  results[a]=polyfunction(point2[a],avec,"horner")
+}
+
+for (i in 2:101){
+  if (results[i-1]*results[i]<0){
+    root=(point2[i-1]+point2[i])/2
+    print (root)
+  }
+  if (results[i]==0){
+    print(point2[i])
+  }
+}
+
+for (a in 1:(length(point2))){
+  results[a]=polyfunction(point2[a],rvec,"factor")
+}
+
+for (i in 2:101){
+  if (results[i-1]*results[i]<0){
+    root=(point2[i-1]+point2[i])/2
+    print (root)
+  }
+  if (results[i]==0){
+    print(point2[i])
+  }
+}
+```
+For the direct method and the horner method, I found a couple of roots that are very close to 0 but not 0. It shows that the function crosses x-axis several times, which means the data distribution is not linear.
+For the factor method, I found exactly one root, which means the function crosses x-axis only once. 

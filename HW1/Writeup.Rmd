@@ -1,0 +1,97 @@
+---
+title: "writeup"
+author: Tian Tan
+date: "February 5, 2016"
+output: pdf_document
+---
+Chernoff Faces
+
+1.
+```{r}
+library(aplpack)
+olympic=read.csv("olympic.csv")
+faces(olympic[1:10])
+```
+
+
+2.
+1) The 100-meter time running corresponds to the height of the face and the style of hair. The longer the time run, the longer the length the face, the higher the hair.
+2) The long jump distance corresponds to the width of the face and the height of the nose. The further the distance jumped, the wider the the face and the higher the nose.
+3) The shot distance corresponds to the structure of the face and the width of the nose. The shorter the distance, the more trangular the face becomes and the wider the nose is.
+4) The high jump corresponds to the height of the mouth and the width of the ear. The higher the jump, the higher the mouth and the wider the ear.
+5) The 400-meter running time corresponds to the width of the mouth and the height of the ear. The longer the time, the wider the mouth and higher the ear.
+6) The 110 Meter and 120 Yard Hurdles corresponds to the smiling. The longer the time, the larger the smile.
+7) The disc distance corresponds to the height of the eyes. The longer the distance, the higher the eyes.
+8) The score of vault corresponds to the width of eyes. The higher the score, the wider the eyes.
+9) The score of jav corresponds to the height of hair. The higher the score, the higher the hair.
+10) The 1500-meter time corresponds to the width of the hair. The longer the time, the wider the hair.
+
+
+3.All have similar height and width of face, similar height and width of mouth, and similar shape of smile, which means they should have similar m100,ljump, hjump,m400 and m110h value. And their corresponding data is shown pretty similar.
+ 
+
+4. The outlier is the last one. Its face is close to triangle while others are not; its eye are similar to a point while the others are long and thin;its hair is upward while others are downward; it is laughing while others are either smiling or numb. So the 34th is the outlier. 
+
+
+Principal Component Analysis
+
+1.Getting the Principal Components
+
+```{r}
+X=read.csv("olympic.csv")
+X=X[-34,-11]
+standardizedX=scale(X)
+corX=cor(standardizedX)
+eigenX=eigen(corX)
+print(eigenX)
+```
+
+
+3.Which Principal Components are important?
+```{r}
+sum=0
+for (k in c(eigenX$values)){
+  sum=sum+k
+}
+result=rep(0,10)
+sum2=0
+for (i in 1:10){
+  sum2=(sum2)+eigenX$values[i]
+  result[i]=sum2/sum
+}
+matrix=cbind(c(1:10),result)
+plot(matrix,xlab="the number of principal components",ylab="the proportion of variance",ylim=c(0,1),xlim=c(1,10),main="scree plot")
+abline(h=0.8)
+lines(matrix)
+```
+
+
+4. Interpret these principal components
+The second principal component:
+From the magnitude and the signs of each entry, we can tell that only ljump has a negative sign. Ljump, hjump,m110h and pvault are extremely small in magnitude. This would roughly mean that the value for jumping are less than others(except m110h).
+The third principal component:
+There's no interpretation for it. Shot, disc, pvault and m1500 have a negative sign, while shot and disc have a smaller magnitude than others. Analysis can't be given since there is no obvious evidence show correlation between events. 
+The forth principal component:
+It's noise as well. The magnitude and the signs of each entry seems randomly listed. 
+
+
+5. What else can I do with the principal componets?
+```{r}
+PC1=matrix(eigenX$vectors[,1],nrow=10)
+XP1=standardizedX%*%(PC1)
+PC2=matrix(eigenX$vectors[,2],nrow=10)
+XP2=standardizedX%*%(PC2)
+PC3=matrix(eigenX$vectors[,3],nrow=10)
+XP3=standardizedX%*%(PC3)
+plot(XP1,XP2,main="PC1&PC2",xlab="PC1",ylab="PC2")
+plot(XP2,XP3,main="PC2&PC3",xlab="PC2",ylab="PC3")
+plot(XP1,XP3,main="PC1&PC3",xlab="PC1",ylab="PC3")
+```
+Interpretation: The data from PC1&PC2 plot seems randomly distributed. There might be some correlation between PC2&PC3, because some of its data points fit a line with a positive slope. The data distribution in PC1&PC3 doesn't have support their correlation either.It is somehow symmetric though. 
+
+
+
+6. A brief comparison
+Yes, there are similarities between PCA and Chernoff Faces. Both methods use multivariate statistics to identify unreliable data in a large dataset, which may contain large amount of parameters.Though it is easier to identify the outlier in Chernoff Faces method. 
+
+
