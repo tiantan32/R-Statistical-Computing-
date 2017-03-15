@@ -1,0 +1,141 @@
+---
+title: "writeup four"
+author: "Tian Tan"
+date: "May 2, 2016"
+output: pdf_document
+---
+
+1.Using a grid of equally spaced values from 0 to 10 with increments of 0.01, plot the density functions of f(x) and 2h(x). Color the density function f(x) blue, and the density function h(x) red. Ensure that the plot is distinctly labelled, and put both plot and code in your writeup.
+```{r}
+x=seq(from=0,to=10,by=0.01)
+plot.default(x=0,y=NULL,xlab="x",ylab="density",xlim=c(0,10),main="density functions",type="l")
+grid(1000,1000)
+fx=dgamma(x,2,1)
+lines(x,fx,col="blue")
+hx=dexp(x,0.5)
+gx=2*hx
+lines(x,gx,col="red")
+legend("topright",c("f(x)","2h(x)"),lty=c(1,1),
+       lwd=c(2.5,2.5), col=c("BlUE","RED"))
+
+```
+
+2. Why would it be hard (if not impossible), to implement the above method?
+
+```{r}
+x=seq(from=0,to=10,by=0.1)
+plot.default(x=0,y=NULL,xlab="x",ylab="density",xlim=c(0,10),main="density functions",type="l")
+grid(100,100)
+fx=dgamma(x,2,1)
+lines(x,fx,col="blue")
+abline(h=max(fx),col="red")
+u=runif(101,0,max(fx))
+Accept=u<=fx
+Reject=u>fx
+X=x[Accept]
+Y=x[Reject]
+points(X,u[Accept],pch=1,col="blue")
+points(Y,u[Reject],pch=2,col="red")
+```
+
+For densities on the whole real line, we can not generate points uniformly usisng rectangle method, because the rectangle is infinite and we can't calculate infinite area. What we need is a shape with finite area within which we can simulate points uniformly.To make it more clearly, I plot the distributions, where the rejected points and accepted points are shown. From the plot, we can barely see accpeted points when fx goes to infinitely close to 0; however, the number of corresponding rejected points is way larger. It can cause estimating errors. 
+
+3. Show that the density function of this variable is given by: $f(x)=\frac{x}{5}exp(-(x-4))$ 
+\begin{eqnarray*}
+f(x;\alpha;\beta) &=& \frac{\beta^{\alpha}x^{\alpha-1}e^{-x\beta}}{\Gamma(\alpha)}\\
+                  &=& xe^{-x} \\
+f(x>4;\alpha;\beta) &=& \frac{1-\int_{0}^4xe^{-x}dx}{\int_{0}^{\infty}xe^{-x}dx} \\
+                    &=& \frac{1-(-5e^{-4}+1)}{1} \\
+                    &=& 5e^{-4} \\
+f(x;\alpha;\beta|x>4) &=& \frac{f(x;\alpha;\beta)}{f(x>4;\alpha;\beta)} \\
+                      &=& \frac{xe^{-x}}{5e^{-4}}\\
+                      &=& \frac{x}{5}e^{-(x-4)}
+\end{eqnarray*}
+
+4.For each of these three envelope densities, derive their density functions, and thus find the corresponding optimal values ki.
+
+a) For $g_1(x)$ being the density of an exponential random variable with rate $\frac{1}{2}$, conditional on its value being greater than 4
+\begin{eqnarray*}
+g_1(x) &=& \lambda e^{-\lambda x} = \frac{1}{2}e^{-\frac{x}{2}} \\ 
+g_1(x>4) &=& \frac{1-G_1(x\leq 4)}{G_1(x)}\\
+         &=& \frac{1-\int_{0}^4\frac{1}{2}e^{-\frac{x}{2}}dx}{\int_{0}^{\infty}\frac{1}{2}e^{-\frac{x}{2}}dx} \\
+         &=& e^{-2} \\
+g_1(x|x>4) &=& \frac{g_1(x)}{g_1(x>4)}\\
+           &=& \frac{1}{2}e^{-(\frac{x}{2}-2)}
+\end{eqnarray*}
+The optimum $k_i$ will be $\frac{8}{5}$.
+
+
+b) For $g_2(x)$ being the density of an exponential random variable with rate $\frac{1}{5}$, conditional on its value being greater than 4
+\begin{eqnarray*}
+g_2(x) &=& \lambda e^{-\lambda x} = \frac{1}{5}e^{-\frac{x}{5}} \\ 
+g_2(x>4) &=& \frac{1-G_2(x\leq 4)}{G_2(x)}\\
+         &=& \frac{1-\int_{0}^4\frac{1}{5}e^{-\frac{x}{5}}dx}{\int_{0}^{\infty}\frac{1}{5}e^{-\frac{x}{5}}dx} \\
+         &=& e^{-\frac{4}{5}} \\
+g_2(x|x>4) &=& \frac{g_1(x)}{g_1(x>4)}\\
+           &=& \frac{1}{5}e^{-\frac{x-4}{5}}
+\end{eqnarray*}
+The optimum $k_i$ will be 4.
+
+
+c) For $g_3(x)$ being the density of a standard Cauchy random variable, conditional on its value being greater than 4
+\begin{eqnarray*}
+g_3(x) &=& \frac{1}{\pi(1+x^2)} \\ 
+g_3(x>4) &=& \frac{1-G_3(x\leq 4)}{G_3(x)}\\
+         &=& \frac{1-\int_{0}^4\frac{1}{\pi(1+x^2)}dx}{\int_{0}^{\infty}\frac{1}{\pi(1+x^2)}dx} \\
+         &=& 1-(0.4220209+0.5) = 0.0779791 \approx 0.078 \\
+g_3(x|x>4) &=& \frac{g_1(x)}{g_1(x>4)}\\
+           &=& \frac{1}{0.078\pi(1+x^2)}
+\end{eqnarray*}
+The optimum $k_i$ will be $0.8*0.078*pi*(1+4^2)=3.332601$
+
+
+4. rejection sample
+```{r}
+f<-function(x){ 0.2*x*exp(-(x-4)) }
+g1<-function(x){ 0.5*exp(-0.5*(x-4)) }
+g2<-function(x){ 0.2*exp(-0.2*(x-4)) }
+g3<-function(x){ 1/(0.078*pi*(1+x^2)) }
+
+rej_sample<-function(N){
+  Y=-2*log(2*runif(N,0,0.5))+4
+  Z1=runif(100)*2*g1(Y)
+  Z2=runif(100)*4*g2(Y)
+  Z3=runif(100)*3.332601*g3(Y)
+  Accept1=Z1<f(Y)
+  Accept2=Z2<f(Y)
+  Accept3=Z3<f(Y)
+  
+  X1=Y[Accept1]
+  X2=Y[Accept2]
+  X3=Y[Accept3]
+  rejected=list(x1=(N-length(X1)),x2=(N-length(X2)),x3=(N-length(X3)))
+  
+  return(rbind(rejected))
+}
+
+# N=1000
+rej_sample(1000)
+```
+
+
+5. Display the graphs of f(x), k1g1(x), k2g2(x) and k3g3(x) on one plot. Ensure the graphs and the plot are clearly labelled. Is there any relation between the total number of random variables rejected from the rejection sampler and the plot? Explain.
+```{r}
+x=seq(from=4,to=14,by=0.01)
+plot.default(0,NULL,xlab="x",ylab="density",xlim=c(4,14),main="density functions",type="l")
+fx=0.2*x*exp(-(x-4)) 
+g1x= 0.5*exp(-0.5*(x-4)) 
+g2x= 0.2*exp(-0.2*(x-4)) 
+g3x= 1/(0.078*pi*(1+x^2)) 
+lines(x,fx,col="red")
+lines(x,1.6*g1x,col="blue")
+lines(x,4*g2x,col="green")
+lines(x,3.332601*g3x,col="purple")
+legend("topright",c("f(x)","2*g1(x)","4*g2(x)","3.3*g3(x)"),lty=c(1,1),
+       lwd=c(2.5,2.5), col=c("red","blue","green","purple"))
+```
+
+From the plot we can find that the k2g2x is always above k3g3x, which means that there will always be more random variables rejected from the k2g2x sampler than from the k3g3x sampler. This can be proved by the results of total rejected number of random variables. 
+
+
+Cite: work with Rui Chen, rc687

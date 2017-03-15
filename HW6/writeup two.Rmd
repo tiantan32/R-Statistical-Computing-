@@ -1,0 +1,130 @@
+---
+title: "writeup two"
+author: "Tian Tan"
+date: "April 29, 2016"
+output: pdf_document
+---
+
+A.Estimate I using Monte-Carlo integration. Include both the estimate and code in the writeup.
+
+By using the Monte-Carlo method
+```{r}
+f<-function(x){
+  sqrt(1-x^2)
+}
+
+MonteCarloIntegral<-function(ftn,a,b,n){
+  # ftn is a function of one variable
+  # [a,b] is the range of integration
+  # n is the sample size  
+
+  I=0
+  for (i in 1:n){
+     u=runif(n,a,b)
+     I[i]=mean(ftn(u))*(b-a)
+  }
+  return(I)
+}
+
+IMC=MonteCarloIntegral(f,0,1,1000)
+# The estimated value is 
+mean(IMC)
+```
+
+
+B. Estimate I using antithetic sampling, and compute an estimate of the percentage variance reduction achieved by using the antithetic approach. Include the estimates and code in the writeup.
+```{r}
+AntitheticSampling<-function(ftn,n,a,b){
+  # ftn is a function of one variable 
+  # [a,b] is the range of integration
+  # n is the sample size 
+  I=0
+  for (i in 1:n){
+      ua=runif(n,a,b)
+      I[i]=0.5*mean(ftn(ua))+0.5*mean(ftn(1-ua))
+  }
+  return(I)
+}
+ 
+IAS=AntitheticSampling(f,1000,0,1)
+# The estimated value is
+mean(IAS)
+
+
+# The percentage variance reduction is
+(var(IMC)-var(IAS))/var(IMC) *100
+```
+
+
+C. Approximate the integrand by a straight line and use a control variate approach to estimate the value of the integral. Estimate the resulting variance reduction achieved. Specify the control variate used and include the estimate and code in the writeup.
+```{r}
+ControlCovariate<-function(ftn,n){
+  estimator=rep(0,n)
+  for (i in 1:n){
+    x = runif(n)
+    fx = ftn(x)  # Integral we want to estimate
+    hx = 2*x+1    # Integral that we know
+    alpha = cov(fx,hx)/var(hx)    # Correction factor
+    estimator[i]=mean(fx)-alpha*(mean(hx)-2)
+  }
+  return(list(I=mean(estimator),Variance=var(estimator)))
+}
+result=ControlCovariate(f,1000)
+
+# The estimated value 
+result$I
+
+# The variance reduction
+var(IMC)-result$Variance
+```
+
+
+D. Use importance sampling to estimate the integral I. Try using three importance sampling densities, and compare their effectiveness. Specify these importance sampling densities, estimates, and include code in the writeup.
+
+I choose distributions as such: 
+
+X1~U(0,1), density=1
+
+X2~E(6), density= $6e^{-6x}$
+
+X3~beta(1,2), density=2*(1-x)
+
+```{r,eval=FALSE}
+ImportanceSampling<-function(ftn,n){
+  # ftn is a function of one variable 
+  # [a,b] is the range of integration
+  # n is the sample size 
+  Est1=rep(0,n)
+  Est2=rep(0,n)
+  Est3=rep(0,n)
+  result=matrix(0,nrow=2,ncol=3)
+  colnames(result)=c("X1","X2","X3")
+  rownames(result)=c("Estimates","Variance")
+  for (i in 1:n){
+      x = runif(n)   # X1,...Xn~U(0,1)
+      Est1[i]=mean(ftn(x))
+      
+      x=rexp(n,6)  # X1,...Xn~E(6)
+      id=which((0<=x)&(x<=1))
+      x=x[id]
+      fx= 6*exp(-6*x)
+      Est2[i]=mean(ftn(x)/fx)
+
+      x=rbeta(n,1,2)   # X1,...Xn~Beta(1,2)
+      Est3[i]=mean(ftn(x)/(2*(1-x)))
+  }
+   result[1,]=c(mean(Est1),mean(Est2),mean(Est3))
+   result[2,]=c(var(Est1),var(Est2),var(Est3))
+   return(result)
+}
+IS=ImportanceSampling(f,1000)
+IS
+save(IS,file="~/Documents/Cornell/Statistical computing/HW6/IS.rData")
+```
+```{r}
+load(file="~/Documents/Cornell/Statistical computing/HW6/IS.rData")
+IS
+```
+
+
+Cite: work with Rui Chen, rc687

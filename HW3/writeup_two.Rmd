@@ -1,0 +1,184 @@
+---
+title: "writeup two"
+author: "Tian Tan"
+date: "March 13, 2016"
+output: pdf_document
+---
+Part Two
+
+1. $\mu$ likelihood function 
+\begin{eqnarray*}
+l(\mu) &=& \prod_{i=1}^n f(X_i|\mu) \\
+       &=& \prod_{i=1}^n \frac{\mu^k e^{-\lambda}}{i!}
+\end{eqnarray*} 
+
+Will verify that $T=\sum_{i=1}^nX_i$ is sufficient statistic for $\mu$
+The distribution of sum is also poisson, i.e. 
+\begin{eqnarray*}
+E(\sum_{i=1}^nX_i) &=& \sum_{i=1}^nE(X_i) \\
+                   &=& \sum_{i=1}^n\mu =n\mu \\
+Var(\sum_{i=1}^nX_i) &=& \sum_{i=1}^nVar(X_i) \\
+                     &=& \sum_{i=1}^n\mu =n\mu
+\end{eqnarray*} 
+So the parameter for the sum is $n\mu$
+
+Now verify the sufficiency:
+\begin{eqnarray*}
+P(X_1=x_1,...X_n=x_n|T=\sum_{i=1}^nX_i) &=&\frac{P(X_1=x_1,...X_n=x_n,T=\sum_{i=1}^nX_i)}{P(T=\sum_{i=1}^nX_i)}\\ &=&\frac{\prod_{i=1}^n\frac{e^{-\lambda}\lambda^X_i}{x_i!}}{\frac{e^{-n\lambda}(n\lambda)^{\sum_{i=1}^nX_i}}{\sum_{i=1}^nX_i}}\\&=&\frac{(\sum_{i=1}^nX_i)!}{X_1!X_2!...X_n!n^{\sum_{i=1}^nX_i}}
+\end{eqnarray*} 
+The conditional distribution relates only to $\sum_{i=1}^nX_i$ and $X_i$, it doesn't depend on $\mu$, so $\sum_{i=1}^nX_i$ is a sufficient statistic. 
+
+2. Show the sample mean $\bar{X_n}$ is the maximum likelihood estimation for $\mu$ 
+
+The log likelihood function for $\mu$ is 
+\begin{eqnarray*}
+l(\mu) &=& \sum_{i=1}^n (X_ilog\mu-\mu-logX_i!) \\
+       &=& log\mu\sum_{i=1}^nX_i-n\mu-\sum_{i=1}^nlogX_i!\\
+l'(\mu) &=& \frac{1}{\mu}\sum_{i=1}^nX_i-n
+\end{eqnarray*} 
+Set $l'(\mu)$, we have mle $\hat{\mu}=\bar{x}$
+
+3.Score statistic for testing the hypothesis, $H_0:\mu=\mu_0$ and explain why the statistic has a chi-squared distribution if the hypothesis is true.
+\begin{eqnarray*}
+E(X) &=& n\mu\\
+Var(X) &=& n\mu\\
+S &=& \frac{(X-n\mu_0)^2}{n\sigma_0^2} \\
+  &=& \frac{(\bar{X}-\mu_0)^2}{\frac{\sigma_0^2}{n}} \\
+where\ \mu_0&=&\mu=mean\ under\ true\ null \\
+      \sigma_0^2&=&\mu=variance\ under\ true\ null
+\end{eqnarray*} 
+
+If the hypothesis is true, $\mu=\mu_0$
+\begin{eqnarray*}
+S &=& (\frac{\bar{X}-\mu_0}{\frac{\sigma_0}{\sqrt(n)}})^2 \xrightarrow{d} Z^2
+\end{eqnarray*}
+where Z is a standard normal random variable, and the distribution of $U=Z^2$ is the chi-square distribution with 1 degree of freedom, i.e. $Z^2\sim\chi_1^2$ if $Z\sim N(0,1)$
+
+4. Wald Statistic and likelihood ratio statistic
+
+Wald Statistic: 
+
+\begin{eqnarray*}
+W &=& (\frac{\bar{X}-\mu_0}{\frac{\hat{\sigma_0}}{\sqrt(n)}})^2 \\
+  &=& S\frac{\sigma_0^2}{\hat{\sigma}^2} \xrightarrow{d} \chi_1^2 \ under\ null
+\end{eqnarray*}
+where $\hat{\sigma}^2=\hat{\mu}$, $\hat{\mu}=\bar{X}$ because $\frac{\sigma_0^2}{\hat{\sigma}^2} \xrightarrow{P} 1 \ if\ \mu=\mu_0$
+
+Likelihood Ratio Statistic:
+\begin{eqnarray*}
+L_0 &=& \prod_{i=1}^n \frac{(\mu_0)^{X_i}e^{-\lambda}}{X_i!} \\
+L_a &=& \prod_{i=1}^n \frac{(\mu)^{X_i}e^{-\lambda}}{X_i!} \\
+L(\bar{X}) &=& -2\ln{\frac{L_0}{L_a}}\\
+      &=& -2\ln{\frac{\prod_{i=1}^n \frac{(\mu_0)^{X_i}e^{-\mu_0}}{X_i!}}{\prod_{i=1}^n \frac{(\mu)^{X_i}e^{-\mu}}{X_i!}}}\\
+      &=& -2n(\bar{X} ln\frac{\mu_0}{\bar{X}}+\bar{X}-\mu_0)
+\end{eqnarray*}
+
+5.Taylor series to show LR statistic is asymptotically equivalent to the score statistic
+\begin{eqnarray*}
+\lambda(\bar{X})&\approx&\lambda(\mu_0)+\lambda'(\mu_0)(\bar{X}-\mu_0)+\frac{1}{2}\lambda''(\mu_0)(\bar{X}-\mu_0)^2 \\
+\lambda(\mu_0) &=& -2\ln{\frac{L_0}{L_a}}\\
+      &=& -2\ln{\frac{\prod_{i=1}^n \frac{(\mu_0)^{X_i}e^{-\mu_0}}{X_i!}}{\prod_{i=1}^n \frac{(\mu)^{X_i}e^{-\mu}}{X_i!}}} \\
+\lambda'(\mu_0) &=& -(2\ln{\mu}^{\sum_{i=1}^nX_i}+2\ln e^{-n\mu})'\\
+                &=& -2\sum_{i=1}^nX_i\frac{1}{\mu_0}+2n=0 \\
+\lambda''(\mu_0) &=& -\frac{2\sum_{i=1}^nX_i}{\mu_0^2} \\
+                 &=& \frac{2n}{\mu_0}  \\
+\lambda(\bar{X}) &\approx& \frac{1}{2}\cdot \frac{2n}{\mu_0}(\bar{X}-\mu_0)^2\\
+                 &\approx&-(\frac{\bar{X}-\mu_0}{\frac{\sigma_0)}{\sqrt(n)}})^2\\
+                &\approx& S
+\end{eqnarray*}
+
+6. Show the endpoints of a confidence interval obtained by inverting the score test are the solutions of a quadratic equation. Show that the endpoints are always sitive unless all the data values are zero.
+
+1)A confidence interval for a parameter is an interval of numbers within which we expect the true value of the population parameter to be contained.The endpoints of a confidence interval is the roots of failure to reject $H_0$, i.e. when $S \le Z^2$
+\begin{eqnarray*}
+S =\frac{(\bar{X}-\mu_0)^2}{\frac{\mu_0}{n}} &\le& Z^2 \\
+n\bar{X}^2-2n\bar{X}\mu_0+n\mu_0^2- \mu_0Z^2 &\le& 0 \\
+    n\mu_0^2-(2n\bar{X}+Z^2)\mu_0+n\bar{X}^2 &\le& 0 \\
+    \frac{(2\bar{X}+\frac{z^2}{n})-\sqrt((2\bar{X}+\frac{z^2}{n})^2-4\bar{X}^2)}{2} \le \mu_0 &\le& \frac{(2\bar{X}+\frac{z^2}{n})+\sqrt((2\bar{X}+\frac{z^2}{n})^2-4\bar{X}^2)}{2}
+\end{eqnarray*} 
+
+7. function to determine the endpoints of a confidence interval obtained by inverting the score test.
+```{r}
+Score_interval<-function(data,alpha){
+  xbar=mean(data)
+  n=length(data)
+  z=qnorm((1+alpha)/2)
+  output=list()
+  output$lower=((2*xbar+z^2/n)-sqrt((2*xbar+z^2/n)^2-4*(xbar^2)))/2
+  output$upper=((2*xbar+z^2/n)+sqrt((2*xbar+z^2/n)^2-4*(xbar^2)))/2
+  return (output)
+}
+```
+
+8. simulate confidence intervals for a given sample size and alpha level and known value of $\mu$ 
+```{r}
+CI_simulation<-function(num,size, alpha, mu){
+  z=qnorm((1+alpha)/2)
+  output=list()
+  for (i in 1:num){
+    data=rpois(size,lambda=mu)
+    xbar=mean(data)
+    output$lower[i]=((2*xbar+z^2/size)-sqrt((2*xbar+z^2/size)^2-4*(xbar^2)))/2
+    output$upper[i]=((2*xbar+z^2/size)+sqrt((2*xbar+z^2/size)^2-4*(xbar^2)))/2
+  }
+  return (output)
+}
+```
+
+9. Run code with n=10, $\alpha$=0.9, $\mu$=1.0
+```{r}
+result=CI_simulation(10000,10,0.9,1)
+```
+
+10. Determine the proportion of times that $\mu$ is below the lower confidence limit, and above the upper confidence limit in the simulation.
+```{r}
+determinelevel<-function(num,size,alpha,mu){
+ p=list()
+ p$lower=0
+ p$upper=0
+ result=CI_simulation(num,size,alpha,mu)
+ for (i in 1:num){
+   if (mu<result$lower[i]) {
+     p$lower=p$lower+1
+   }
+   if (mu>result$upper[i]) {
+     p$upper=p$upper+1
+   }
+ }
+ p$lower=p$lower/num
+ p$upper=p$upper/num
+ return (p)
+}
+determinelevel(10000,10,0.9,1)
+```
+
+11. Repeat the simulation for $\mu$=5 and $\mu$=10, report results in a table, plot the proportions in a graph with the value of $\mu$ on the x-axis, using different colors and symbols for the lower and upper values. Use abline(V=) to indicate the target probability on the plot. 
+```{r}
+result1=determinelevel(10000,10,0.9,5)
+result2=determinelevel(10000,10,0.9,10)
+result=matrix(1:4,nrow=2,ncol=2,dimnames=list(c("mu1","mu2"),c("lower","upper")))
+result[1,1]=result1$lower
+result[1,2]=result1$upper
+result[2,1]=result2$lower
+result[2,2]=result2$upper
+result=as.table(result)
+print(result)
+plot(c(5,10),result[2,1:2],col="red",pch=1,xlab="mu",ylab="endpoint",ylim=c(0.04,0.06))
+points(c(5,10),result[1,1:2],col="black",pch=2)
+alpha=0.9
+abline(h=(1-alpha)/2)
+```
+
+12.What value of N is required to estimate the proportion of times $\mu$ is below the lower confidence limit to within a tolerance of 0.001 with 95% confidence? Explain your answer.
+The 95% confidence interval for the proportion spans 0.002, which means the right endpoint should be 0.002 larger than the left endpoint of the confidence interval. 
+\begin{eqnarray*}
+Z &=& qnorm((1+\alpha)/2) \approx 1.96\\
+Se(\hat{p}) &=& \sqrt(\frac{p(1-p)}{N})\\
+Z\cdot Se(\hat{p}) &\le& 0.001 \\
+p &\approx& 0.05
+\end{eqnarray*} 
+Thus we hve N=182476
+
+
+Cite: groupwork with Rui Chen, rc687
+

@@ -1,0 +1,102 @@
+---
+title: "writeup four"
+author: "Tian Tan"
+date: "May 11, 2016"
+output: pdf_document
+---
+
+Problem 4
+
+4a. Determine the conditional probabilities of the events TP, FP, TN an FN given P.
+\begin{eqnarray*}
+P(TP|P) &=& \pi_{se} \times p\\
+P(FP|P) &=& (1-\pi_{sp})\times (1-p) \\
+P(TN|P) &=& \pi_{sp} \times (1-p) \\
+P(FN|P) &=& (1-\pi_{se}) \times p
+\end{eqnarray*}
+
+4b. What is the distribution of $N_{TP}$ given P and Y ? What is the distribution of $N_{TN}$ given P and Y ? Hence, what is the distribution of $(N_{TP},N_{TN})$ given P and Y?
+
+The probability TP given P and Y is 
+\begin{eqnarray*}
+P(TP|P,Y) &=& \frac{P(TP|P)}{P(Y)} \\
+          &=& \frac{P(TP|P)}{P(TP|P)+P(FP|P)} \\
+          &=& \frac{\pi_{se} \times p}{\pi_{se} \times p + (1-\pi_{sp})\times (1-p)} =p_1
+\end{eqnarray*}
+The distribution of $N_{TP}$ given P and Y is 
+\begin{eqnarray*}
+N_{TP}|P,Y &\sim& Binom(Y,p_1) \\
+           &\sim& Binom(Y,\frac{\pi_{se} \times p}{\pi_{se} \times p + (1-\pi_{sp})\times (1-p)})
+\end{eqnarray*}
+
+The probability TN given P and Y is 
+\begin{eqnarray*}
+P(TN|P,Y) &=& \frac{P(TN|P)}{P(\bar{Y})} \\
+          &=& \frac{P(TN|P)}{P(TN|P)+P(FN|P)} \\
+          &=& \frac{\pi_{sp} \times (1-p)}{\pi_{sp} \times (1-p)  + (1-\pi_{se}) \times p} =p_2
+\end{eqnarray*}
+The distribution of $N_{TN}$ given P and Y
+\begin{eqnarray*}
+N_{TN}|P,Y &\sim& Binom(N-Y,p_2) \\
+           &\sim& Binom(N-Y,\frac{\pi_{sp} \times (1-p)}{\pi_{sp} \times (1-p)  + (1-\pi_{se}) \times p})
+\end{eqnarray*}
+
+
+
+The probability of TP,TN given P and Y
+\begin{eqnarray*}
+\begin{split}
+P(N_{TP},N_{TN}|P,Y) =& P(N_{TP}=n_{TP},N_{TN}=n_{TN}|P,Y) \\
+                     =& P(n_{TP}|P,Y) \times P(n_{TN}|P,Y) \\
+                     =& {Y \choose n_{TP}} p_1^{n_{TP}} (1-p_1)^{Y-n_{TP}} \times {N-Y \choose n_{TN}} p_2^{n_{TN}} (1-p_2)^{N-Y-n_{TN}} \\
+                     =& {Y \choose n_{TP}} (\frac{\pi_{se}\times p}{P(Y)})^{n_{TP}} (1-\frac{\pi_{se}\times p}{P(Y)})^{Y-n_{TP}} \times \\  &{N-Y \choose n_{TN}} (\frac{\pi_{sp} \times (1-p)}{P(\bar{Y})})^{n_{TN}} (1-\frac{\pi_{sp} \times (1-p)}{P(\bar{Y})})^{N-Y-n_{TN}}
+\end{split}         
+\end{eqnarray*}
+where $P(Y)=\pi_{se} \times p + (1-\pi_{sp})\times (1-p)$ and $P(\bar{Y})=\pi_{sp} \times (1-p)  + (1-\pi_{se}) \times p$
+
+
+4c. What is the distribution of P given $(N_{TP},N_{TN})$ and Y ? Note that $N_{TP}+N_{FN}$ is the true number of resistance isolates in the sample.
+
+$P(Y)-\pi_{se}\times p=(1-\pi_{sp})(1-p) \ $
+
+$1-P(\bar{Y}) -\pi_{sp}(1-p) =1-(1-\pi_{se})p$
+
+\begin{eqnarray*}
+P|(N_{TP},N_{TN}),Y &\propto&  (N_{TP},N_{TN})|P,Y  \times Y|P \times P \\
+(N_{TP},N_{TN})|P,Y &\propto& \frac{p^{n_{TP}} \times (1-p)^{n_{TN}} \times (1-p)^{Y-n_{TP}} \times p^{N-Y-n_{TN}}}{P(Y)^Y \times P(\bar{Y})^{N-Y}} \\
+Y|P &\propto& P(\bar{Y})^{N-Y} \times P(Y)^Y \\
+P &\propto& 1 \\ 
+so\\
+P|(N_{TP},N_{TN}),Y &\propto& \frac{p^{n_{TP}} \times (1-p)^{n_{TN}} \times (1-p)^{Y-n_{TP}} \times p^{N-Y-n_{TN}}}{P(Y)^Y \times P(\bar{Y})^{N-Y}} \times P(\bar{Y})^{N-Y} \times P(Y)^Y \\
+                    &\propto& p^{n_{TP}} \times (1-p)^{n_{TN}} \times (1-p)^{Y-n_{TP}} \times p^{N-Y-n_{TN}}
+\end{eqnarray*}
+So $P|(N_{TP},N_{TN}),Y \sim Beta(N_{TP}+N-Y-N_{TN}+1, N_{TN}+Y-N_{TP}+1)$
+
+4d. Based on your answers to problems to 4a-c write an R function to generate values from the posterior distribution of P given Y using a Gibbs sampler.
+```{r}
+Mygibbs<-function(N,Y,sens,spec,L){
+  #L=chain length
+  Pchain=rep(0,L)
+  x=rexp(1)
+  for (i in 1:L){
+    ptp=sens*x/(sens*x+(1-spec)*(1-x))
+    ntp=rbinom(1,Y,ptp)
+    ptn=spec*(1-x)/(spec*(1-x)+(1-sens)*(x))
+    ntn=rbinom(1,N-Y,ptn)
+    x=rbeta(1,ntp+N-Y-ntn+1,ntn+Y-ntp+1)
+    Pchain[i]=x
+  }
+  return(Pchain)
+}
+```
+
+
+
+4e. Use your function to estimate the posterior distribution of P basedonY =30 positive test results out of N =100 if$\pi_{se}$ =0.9 and $\pi_{sp}$ = 0.8. Report estimates of the mean, median, and 2.5 and 97.5 percentiles of the posterior distribution.
+```{r}
+pchain=Mygibbs(100,30,0.9,0.8,100)
+mean(pchain)
+median(pchain)
+c(quantile(pchain,0.025),quantile(pchain,0.975))
+```
+

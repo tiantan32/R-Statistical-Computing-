@@ -1,0 +1,125 @@
+---
+title: "writeup five"
+author: "Tian Tan"
+date: "May 20, 2016"
+output: pdf_document
+---
+
+5a. Write code to compare the performance of these methods. Use signif to round numbers to 6 significant figures (i.e. assume we are living in a 6 sf world instead of a 16 sf world). Present your comparisons using a table or graph.
+```{r}
+Sum1<-function(N){
+  sum=0
+  for (i in 1:N){
+    sum=sum+(-1)^(i+1)*1/i
+  }
+  return(sum)
+}
+Sum2<-function(N){
+  sum=0
+  for (i in 1:N){
+    sum=sum+(-1)^(N+1-(i-1))*1/(N-(i-1))
+  }
+  return(sum)
+}
+Sum3<-function(N){
+  sum=0
+  if (N==1){
+    return(sum=1)
+  }
+  odd=seq(1,N,2)
+  even=seq(2,N,2)
+  for (i in 1:min(length(odd),length(even))){
+    sum=sum+(1/odd[i]-1/even[i])
+  }
+  if (N%%2==0){
+    return(sum)
+  } else{
+    return(sum+1/N)
+  }
+}
+Sum4<-function(N){
+  sum=0
+  for (i in 1:floor(N/2)){
+    sum=sum+1/((2*i-1)*(2*i))
+  }
+  if (N%%2==0){
+    return(sum)
+  } else{
+    return(sum+1/N)
+  }
+}
+time=0
+tic = proc.time()[3]
+sum1=signif(Sum1(1000000),6)
+time[1] = proc.time()[3] - tic
+tic = proc.time()[3]
+sum2=signif(Sum2(1000000),6)
+time[2] = proc.time()[3] - tic
+tic = proc.time()[3]
+sum3=signif(Sum3(1000000),6)
+time[3] = proc.time()[3] - tic
+tic = proc.time()[3]
+sum4=signif(Sum4(1000000),6)
+time[4] = proc.time()[3] - tic
+result=rbind(cbind(sum1,sum2,sum3,sum4),time)
+rownames(result)=c("sum","time")
+result
+```
+From the comparison result, all four sum methods give the same result in 6 significant figures, i.e. they have the same accuracy in 6 decimal places. However, the running time shows that the last method is the quickest, then the third method and the first method, while the first method is the slowest. 
+
+
+5b.Now, suppose you are given any arbitrary sequence an, and we want to find the partial sum SN. Describe a heuristic to compute this sum with the least error, explaining your reasonig.
+
+We can first determine whether the partial sum SN converges. If it does, then after some n>N, the sum of rest terms converges to 0, and the value sum SN converges to is the least error partial sum SN. If the partial sum SN doesn't converge, then it perhaps better to sum it term by term. 
+
+
+5c.Plot the following functions over a sequence of points very close to zero (e.g. -4e-8 to 4e-8). For each function, derive and plot a Taylor series approximation which better represents the function values over this range.
+```{r}
+fun1<-function(x){
+  sum=0
+  N=50
+  for (i in 0:N){
+    sum=sum+(-1)^i*x^(2*i)/factorial(2*i+1)
+  }
+  return(1-sum)
+}
+fun2<-function(x){
+  sum=0
+  N=100
+  for (i in 0:N){
+    sum=sum+((-2*x^2)^(i)-(-8*x^2)^(i))/factorial(i)
+  }
+  return(sum)
+}
+fun3<-function(x){
+  sum=0
+  N=100
+  for (i in 1:N){
+    sum=sum+((-1)^(i+1))*x^(i-1)/i
+  }
+  return(sum)
+}
+fun4<-function(x){
+  N=100
+  sum=0
+  for (i in 1:N){
+    sum=sum-x^(2*i-2)/factorial(i)
+  }
+  return(sum)
+}
+x=seq(-4e-8,4e-8,1e-9)
+plot(x,1-sin(x)/x,main="function 1")
+points(x,fun1(x),col="red")
+plot(x,(exp(-2*x^2)-exp(-8*x^2)),main="function 2")
+points(x,fun2(x),col="red")
+plot(x,log(1+x)/x,main="function 3")
+points(x,fun3(x),col="red")
+plot(x,(1-exp(x^2))/x^2,main="function 4",ylim=c(-2,2))
+points(x,fun4(x),col="red")
+```
+
+5d. 
+
+
+
+

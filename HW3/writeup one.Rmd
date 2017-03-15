@@ -1,0 +1,109 @@
+---
+title: "3520-HW3"
+author: Tian Tan
+date: "March 9, 2016"
+output: pdf_document
+---
+1. The probability of the equal maximum number 
+$\pi(A) \cap \pi(B)=(6,8)$
+
+\begin{eqnarray*}
+P(max(\pi(A))==max(\pi(B))) &=& \frac{|A \cap B|}{|A \cup B|} \\ 
+                            &=& \frac{2}{7}
+\end{eqnarray*} 
+
+2. The probability of the equal minimum number
+
+\begin{eqnarray*}
+P(min(\pi(A))==min(\pi(B))) &=& \frac{|A \cap B|}{|A \cup B|} \\ 
+                            &=& \frac{2}{7}
+\end{eqnarray*} 
+
+3. Our observed probility tends to get close to the probability that the maximum number in both sets $\pi(A)$ and $\pi(B)$ are equal under a random permutation of $\Omega$ as K gets larger. 
+Since all permutations are independent, the probabilities gained from permutation should all be identical and independent; they follow the Bernoulli distribution where the success is when we see the event {both maximum numbers are equal}.According to the weak law of large number, $\lim\limits_{n \to \infty } P(|\bar{X_n}-\mu|\ge \epsilon)=0$, where $\mu$ is the actual probability that the maximum number in both sets $\pi(A)$ and $\pi(B)$ are equal under a random permutation of $\Omega$
+
+
+4.Expression for a 95% confidence interval:
+$(\hat{p}-z\sqrt(\frac{\hat{p}\hat{q}}{n}),\hat{p}+z\sqrt(\frac{\hat{p}\hat{q}}{n}))$
+\begin{eqnarray*}
+\hat{p} &=& prop (from\ the\ algorithm) \\
+\hat{q} &=& 1-\hat{p} \\
+      z &=& z_{0.05/2}\\
+      n &=& the\ total\ number\ of\ permutations
+\end{eqnarray*} 
+
+5.Does the size of $\Omega$ matter? 
+The size of $\Omega$ won't make a difference in getting my answer in theory, but will affect the time computing my answer. Since the permutation is on $\Omega$, the size of $\Omega$ is the number contained in a permutation, thus the larger the size is, the longer the time needed to compute. 
+
+6.Whether agree with Adam? 
+Agree. 
+
+7.proportion of times that the confidence intervals capture the true resemblance.
+```{r}
+word1=c("happy","music","united","hong")
+word2=c("dave","night","states","kong")
+
+
+findCI<-function(word1, word2, nump, alpha,N){
+  output=list()
+  n1=length(word1)
+  pair1=list()
+  pair2=list()
+  for (i in 1:n1){
+    result=read.table(word1[i])
+    pair1[[i]]=result[,2]
+    result2=read.table(word2[i])
+    pair2[[i]]=result2[,2]
+    A_cap_B=intersect(pair1[[i]],pair2[[i]])
+    A_cup_B=union(pair1[[i]],pair2[[i]])
+    output$res[i]=length(A_cap_B)/length(A_cup_B)
+  }
+  
+  prob=rep(0,n1)
+  z=qnorm(1-alpha/2)
+  for (i in 1:nump){
+    perm = sample(1:65536, replace = FALSE) 
+    for (i in 1:n1){
+      A=perm[pair1[[i]]]
+
+      B=perm[pair2[[i]]]
+      if (max(A)==max(B)){
+        prob[i]=prob[i]+1
+      }
+    }
+  }
+  prob=unlist(prob)
+  prob=prob/nump
+
+  output$phat=prob
+
+  output$l_int=prob-z*sqrt(prob*(1-prob)/nump)
+  output$r_int=prob+z*sqrt(prob*(1-prob)/nump)
+  return(output)
+}
+
+
+simulateCI<-function(word1,word2,N,num,alpha){
+  
+  len=length(word1)
+  p=rep(0,len)
+  for (k in 1:N){
+     result=findCI(word1,word2,num,alpha)
+     for (i in 1:len){
+         if (result$l_int[i]<=result$res[i] && result$res[i]<=result$r_int[i]){
+             p[i]=p[i]+1
+         }
+      }
+
+  }
+  p=p/N
+  return (p)
+}
+
+proportion=simulateCI(word1,word2,10000,100,0.05)
+save(proportion,file="~/Documents/Cornell/Statistical computing/HW3/proportion.rData")
+```
+8.The interpretation 
+The number of permutations is too small for the population to be normally distributed. 
+
+

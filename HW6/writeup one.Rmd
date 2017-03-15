@@ -1,0 +1,110 @@
+---
+title: "writeup one"
+author: "Tian Tan"
+date: "April 27, 2016"
+output: pdf_document
+---
+
+A. Show the probability density of the sum forms a symmetrix triangle above interval(0,2) and derive the cumulative distribution function of X.
+
+1)Proof will use a convoluton.
+
+Let $f_{U_1}$ be the density function of $U_1$, and $f_{U_1}$ be the density function of $U_2$. 
+
+X=$U_1+U_2$. Then
+\begin{eqnarray*}
+f_X(x) &=& \int_{-\infty}^{\infty} f_{U_1}(u_1)f_{U_2}(x-u_1)du_1
+\end{eqnarray*}
+
+Since $U_1$ and $U_2$ are independent uniform random variables on (0,1), the sum, X=$U_1+U_2$, should be in the interval (0,2), and $f_X(x)$=0 for $x\geq 2$ and for x<0.
+
+For $0\leq x<2$, 
+
+i) $0\leq x \leq 1$
+
+$f_{U_1}(u_1)f_{U_2}(x-u_1)$ can be either 1 or 0, 
+We need to make sure when $f_{U_2}(x-u_1)$=1, $x-u_1 \geq 0$, that is, $u_1 \leq x$. So we integrate from $u_1$=0 to $u_1$=x.
+\begin{eqnarray*}
+\int_{0}^{x} 1du_1 &=& x
+\end{eqnarray*}
+So $f_X(x)=x$ for $0<x<1$
+
+ii) 1<x<2
+$f_{U_1}(u_1)f_{U_2}(x-u_1)$ can be either 1 or 0, 
+We need to make sure when $f_{U_2}(x-u_1)$=1, $x-u_1 \leq 1$, that is, $u_1 \geq x-1$. So we integrate from $u_1$=x-1 to $u_1$=1.
+\begin{eqnarray*}
+\int_{x-1}^{2} 1du_1 &=& 2-x
+\end{eqnarray*}
+So $f_X(x)=2-x$ for $1<x<2$
+
+So the probability density of the sum, X=$U_1+U_2$ forms a symmetric triangle above the interval (0,2)
+
+2)derive the cumulative distribution function of X
+
+i) $0\leq x \leq 1$
+\begin{eqnarray*}
+F(x) &=& \int_{0}^{x} xdx = \frac{1}{2}x^2
+\end{eqnarray*}
+
+ii) 1<x<2
+\begin{eqnarray*}
+F(x) &=& \frac{1}{2}+\frac{1}{2}-(\int_{x}^{2} (2-x)dx)\\
+     &=& -\frac{1}{2}x^2+2x-1
+\end{eqnarray*}
+
+B. Write a function to generate values of X using the inverse CDF method. 
+```{r}
+Finv<-function(u){
+  # u is a sequence of random variables
+  x=rep(length(u))
+  for (i in 1:length(u))
+   if (u[i]<=1/2){
+     x[i]=sqrt(2*u[i])
+   } else{
+     x[i]=2-sqrt(2-2*u[i])
+   }
+   return(x)
+}
+```
+
+C.Generate a random sample of N=1000 from the triangular distribution and display a histogram of the sample values using break points at intervals of 0.2. 
+```{r}
+u=runif(1000)
+x=Finv(u)
+hist(x,breaks=seq(0,2,by=0.2),main="histogram of triangular distribution sample values")
+```
+
+D.Tabulate the observed frequency counts in the 10 bins and the corresponding expected values. Use the Pearson chi-squared statistic to assess the agreement between observed and expected counts.
+```{r,eval=FALSE}
+result=matrix(0,nrow=2,ncol=10)
+rownames(result)=c("observed frequency counts","expected values")
+id=order(x)
+x=x[id]
+for (i in 1:10){
+  for (k in 1:1000){
+    if ((0.2*(i-1)<=x[k]) && (x[k]<=0.2*i)){
+         result[1,i]=result[1,i]+1
+    }
+  }
+    if (i<=5){
+         result[2,i]=result[2,i]+((0.2*i)^2*0.5-(0.2*(i-1))^2*0.5)*1000
+      } else{
+         result[2,i]=result[2,i]+(0.4-((0.2*i)^2*0.5-(0.2*(i-1))^2*0.5))*1000
+      }
+}
+
+save(result,file="~/Documents/Cornell/Statistical computing/HW6/result.rData")
+
+```
+
+```{r}
+load(file="~/Documents/Cornell/Statistical computing/HW6/result.rData")
+result
+chisq.test(result)
+```
+
+The chi square p value is greater than 0.05, which means that we fail to reject the null hypothesis that the observed counts is independent of the expected counts. 
+
+
+
+Cite: work with Rui Chen, rc687

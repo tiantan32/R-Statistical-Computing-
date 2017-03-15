@@ -1,0 +1,81 @@
+---
+title: "writeup three"
+author: "Tian Tan"
+date: "May 11, 2016"
+output: pdf_document
+---
+
+Problem 3
+
+```{r}
+#load the data
+ocbook=read.csv("ocbook.csv")
+```
+
+3a. Calculate the largest eigenvalue of the variance-covariance matrix for the five exam scores. Hence determine, $\hat{\pi_1}$, the proportion of variance explained by the first principle component. 
+```{r}
+#construct variance-covariance matrix
+vcomatrix=cov(ocbook)
+#get eigenvalues and eigenvectors
+eigenS=eigen(vcomatrix)
+eigenS
+#the largest eigen value
+Leigen=max(eigenS$values)
+Leigen
+#the sum of eigen value
+eigensum=sum(eigenS$values)
+proportion=Leigen/eigensum
+proportion
+```
+So $\hat{\pi_1}$, the proportion of variance explained by the first principle component, is 61.9115%
+
+3b. For N = 200 and B = 50, calculate an $N \times B$ matrix of bootstrapped versions of $\hat{\pi_1}$. (Each version is based on resampling the students with replacement.) Use each row of the matrix to approximate the bootstrap variance for $\hat{\pi_1}$. Let$\hat{\sigma_i}^2$ denote the ith variance estimate, for i = 1,...,N. Determine the mean and variance of $Xi = (B-1) \hat{\sigma_i}^2/\hat{\sigma}^2$, where $\hat{\sigma_i}^2$ is the mean of all N estimates, and can be regarded as the “true” bootstrap variance.
+```{r}
+B=50
+N=200
+n=nrow(ocbook)
+boot.p1=matrix(0,ncol=B,nrow=N)
+sigma=c()
+for (i in 1:N){
+  for(b in 1:B) {
+    j=sample(1:n,size=n,replace=T)
+    ocbooknew=ocbook[j,]
+    matrixnew=cov(ocbooknew)
+    eigenSnew=eigen(matrixnew)
+    Lnew=max(eigenSnew$values)
+    sumnew=sum(eigenSnew$values)
+    proportion=Lnew/sumnew
+    boot.p1[i,b]=proportion
+  }
+  sigma[i]=var(boot.p1[i,])
+}
+#True variance
+Tsigma=mean(sigma)
+X=(B-1)*sigma/Tsigma
+#mena and variance of Xi
+mean(X)
+var(X)
+```
+
+3c. Construct a histogram of the Xi’s using the probability=TRUE option. What standard probability density can by used to approximate this empirical histogram. Briefly explain why? Overlay the density on the histogram.
+
+Chi-square standard probability density can be used to approximate this histogram. Since the chi-square distribution from a Gaussian-distributed sample is: $X_1,X_2,...X_n$ are i.i.d $N(\mu,\sigma^2)$ random variables, $\sum_{i=1}^n (X_i-\bar{X})^2 \sim \sigma^2 \chi_{n-1}^2$ where $\bar{X}=\frac{1}{n} \sum_{i=1}^n X_i$; In the meantime the sample variance $S_{n-1}^2=\frac{\sum (X_i-\bar{X})^2}{n-1}$, so $\sum_{i=1}^n (X_i-\bar{X})^2 = (n-1)S_{n-1}^2$; By the definition of X, $X_i=(B-1)\hat{\sigma_i}^2/\hat{\sigma}^2 \sim \chi_{n-1}^2$
+
+```{r}
+#construct a histogram of the Xi's
+hist(X,probability=TRUE)
+#construct a histogram of the Xi's stimulated from the Chi-square distribution, with df=49
+chi=rchisq(200,49)
+lines(dchisq(seq(1,100),49))
+```
+
+3d. Construct a histogram of the percent relative error in the bootstrap standard errors, $100 \times (\hat{\sigma_i}/\hat{\sigma}-1)$. Do you think that B = 50 is enough resamples to estimate the standard error? Briefly explain
+```{r}
+error=100*(sigma/Tsigma-1)
+# histogram of error 
+hist(error,probability=TRUE)
+# confidence interval
+c(quantile(error,0.025),quantile(error,0.975))
+```
+B=50 is not enough to estimate the standard error, since the range of confidence interval is pretty large, from -38.48523 to 47.40834; If we increase the number of B, the interval will keep narrowing down and become more accurate in estimating the standard error. But B cannot be increased forever, since the larger B is, the longer the running time and less effciency are. 
+

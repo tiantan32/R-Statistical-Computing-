@@ -1,0 +1,85 @@
+---
+title: "writeup six"
+author: "Tian Tan"
+date: "May 20, 2016"
+output: pdf_document
+---
+
+6a. Given any square lower triangular matrix L and vector b, write code to find y such that Ly = b. Under what conditions can we not get a solution?
+```{r}
+findy<-function(L,b){
+  # L is a square lower triangular matrix
+  # b is a vector
+  n=length(b)
+  y=rep(0,n)
+  y[1]=b[1]/L[1,1]
+  for (i in 2:n){
+    y[i]=b[i]
+    for (j in 1:(i-1)){
+      y[i]=y[i]-L[i,j]*y[j] 
+    }
+    y[i]=y[i]/L[i,i]
+  }
+  return(y)
+}
+```
+The product of main entries of L cant't be 0. Moreover, if the length of b is not equal to the column number of L, then L and b can not be multiplied, thus we can't get a solution. 
+
+6b. Using the same idea as the above, given any square upper triangular matrix U and vector y, write code to find x such that Ux = y.
+```{r}
+findx<-function(U,y){
+  n=length(y)
+  x=rep(0,n)
+  x[n]=y[n]/U[n,n]
+  for (i in (n-1):1){
+    x[i]=y[i]
+    for (j in n:(i+1)){
+      x[i]=x[i]-U[i,j]*x[j] 
+    }
+    x[i]=x[i]/U[i,i]
+  }
+  return(x)
+}
+```
+
+6c. Explain how you can use the code in parts 6a and 6b to find Ax = b given that you have the factorization A = LU. Thus, write a function:
+```{r}
+Findx<-function(A,b){
+  #A is a n by n square matrix
+  #b is a n by 1 column vector
+  #x is a n by 1 column vectors such that A*x=b
+  #You may use the package {\tt matrixcalc} or similar
+  #but only to find the LU decomposition of a square matrix
+  library(matrixcalc)
+  LU_A=lu.decomposition(A)
+  L=LU_A$L
+  U=LU_A$U
+  n=length(b)
+  for (i in 1:n){
+    if (L[i,i]==0 | U[i,i]==0 ){
+      print("There is no solution")
+      return(NULL)
+    }
+  }
+  y=rep(0,n)
+  y[1]=b[1]/L[1,1]
+  for (i in 2:n){
+    y[i]=b[i]
+    for (j in 1:(i-1)){
+      y[i]=y[i]-L[i,j]*y[j] 
+    }
+    y[i]=y[i]/L[i,i]
+  }
+  x=rep(0,n)
+  x[n]=y[n]/U[n,n]
+  for (i in (n-1):1){
+    x[i]=y[i]
+    for (j in n:(i+1)){
+      x[i]=x[i]-U[i,j]*x[j] 
+    }
+    x[i]=x[i]/U[i,i]
+  }
+  return(x)
+}
+```
+

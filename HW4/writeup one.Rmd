@@ -1,0 +1,217 @@
+---
+title: "writeup one"
+author: "Tian Tan"
+date: "March 24, 2016"
+output: pdf_document
+---
+
+1. newtonraphson1
+```{r}
+newtonraphson1<-function(ftn, x0, tol = 1e-9, max.iter = 100){
+  x=x0
+  fx=ftn(x)
+  iter=0
+  while ((abs(fx[1]) > tol) && (iter < max.iter)) {
+       x <- x - fx[1]/fx[2]
+       fx <- ftn(x)
+       iter<-iter+1
+  }
+  if (abs(fx[1]) > tol) {
+    cat("Algorithm failed to converge\n")
+    return(c("NA",-1))
+  } else {
+    return(c(x,iter))
+  }
+}
+```
+
+2.halley1
+```{r}
+halley1<-function(ftn,x0,tol,max.iter){
+  x<-x0
+  fx<-ftn(x)
+  iter<-0
+  while ((abs(fx[1]) > tol) && (iter < max.iter)) {
+      iter<-iter+1
+      x<-x - fx[1]/(fx[2]-fx[1]*fx[3]/(2*fx[2]))
+      fx<-ftn(x)
+  }
+  if (abs(fx[1]) > tol) {
+    return(c('NA',-1))
+  } else {
+    return(c(x, iter))
+  }
+}
+
+```
+
+3.FindDeriv
+```{r}
+FindDeriv<-function(ftn, x){
+  fx=ftn(x)
+  epsilon=(10^-7)*x
+  epsilon2=(10^-7)*(x+24*epsilon)
+  if (x==0){
+    epsilon=10^-6
+    epsilon2=10^-6*(1+24*epsilon)
+  }
+  dfx=(ftn(x+epsilon)-ftn(x))/epsilon
+  ddfx=((ftn(x+epsilon+epsilon2)-ftn(x+epsilon))/epsilon2-dfx)/epsilon
+  return(c(fx,dfx,ddfx))
+}
+
+```
+I choose the first epsilon as 10^-7*x, to make it be related to the value of x, since larger value of x could use a larger scale of epsilon; for the second epsilon, I use the same scale as the first epsilon(10^-7), and increase the value of x by 24epsilon, since this value seems to cause the smallest error.
+
+4. The Comparison
+1) newtonraphson2 and halley2 
+```{r}
+newtonraphson2<-function(ftn, x0, tol = 1e-9, max.iter = 100){
+  x=x0
+  fx=FindDeriv(ftn,x)
+  iter=0
+  while ((abs(fx[1]) > tol) && (iter < max.iter)) {
+       x=x - fx[1]/fx[2]
+       fx=FindDeriv(ftn,x)
+       iter=iter+1
+  }
+  if (abs(fx[1]) > tol) {
+    cat("Algorithm failed to converge\n")
+    return(c("NA",-1))
+  } else {
+    return(c(x,iter))
+  }
+}
+
+halley2<-function(ftn,x0,tol,max.iter){
+  x=x0
+  fx=FindDeriv(ftn,x)
+  iter=0
+  while ((abs(fx[1]) > tol) && (iter < max.iter)) {
+    dfx=fx[2]
+    ddfx=fx[3]
+    x=x-fx[1]/(dfx-(fx[1]*ddfx/(2*dfx)))
+    fx=FindDeriv(ftn,x)
+    iter=iter+1
+  }
+  if (abs(fx[1]) > tol) {
+    return(c('NA',-1))
+  } else {
+    return(c(x, iter))
+  }
+}
+```
+
+2) Compare four methods in root finding 
+```{r}
+comparison<-function(f,x,fx){
+  result=matrix(0,nrow=8,ncol=length(x),
+                dimnames=list(c("newtonraphson1_iter","newtonraphson1_root",
+                                "halley1_iter","halley1_root","newtonraphson2_iter",
+                                "newtonraphson2_root","halley2_iter","halley2_root")))
+  colnames(result)=x
+  for (i in 1:length(x)){
+    result[1,i]=newtonraphson1(f,x[i],tol = 1e-9, max.iter = 100)[2]
+    result[2,i]=newtonraphson1(f,x[i],tol = 1e-9, max.iter = 100)[1]
+    result[3,i]=halley1(f,x[i], tol = 1e-9, max.iter = 100)[2]
+    result[4,i]=halley1(f, x[i], tol = 1e-9, max.iter = 100)[1]
+    result[5,i]=newtonraphson2(fx,x[i],tol = 1e-9, max.iter = 100)[2]
+    result[6,i]=newtonraphson2(fx,x[i],tol = 1e-9, max.iter = 100)[1]
+    result[7,i]=halley2(fx,x[i], tol = 1e-9, max.iter = 100)[2]
+    result[8,i]=halley2(fx, x[i], tol = 1e-9, max.iter = 100)[1]
+   }
+  return(result)
+}
+
+```
+1)) The square root of 26 with x0 = 1,3,6
+```{r}
+x0=c(1,3,6)
+ftnxsquare<-function(x){
+  result=FindDeriv(fx1,x)
+  return(result)
+}
+fx1<-function(x){
+  return(x^2-26)
+}
+comparison(ftnxsquare,x0,fx1)
+cat("True root is",sqrt(26),"\n")
+```
+2)) cos(x)-x with x0=1,3,6
+```{r}
+ftnxcos<-function(x){
+  result=FindDeriv(fx2,x)
+  return(result)
+}
+fx2<-function(x){
+  return(cos(x)-x)
+}
+x2=c(1,3,6)
+comparison(ftnxcos,x2,fx2)
+cat("True root is approximately 0.739085133216","\n")
+```
+3)) $2^x-3^x+1$ with x0=-2,0,2.
+
+Raise errors in newtonrapson methods. Algorithm failed to converge. Reason: the function under area from negative infinity to 0 is almost a flat line, which means the function's first derivative that takes negative x close or equal to 0. In that case our methods have errors because methods all use the first derivative as denominator.
+```{r}
+x=c(2,4,6)
+result=matrix(0,nrow=4,ncol=length(x),
+              dimnames=list(c("halley1_iter","halley1_root","halley2_iter","halley2_root")))
+colnames(result)=x
+f<-function(x){
+  result=FindDeriv(fx,x)
+  return(result)
+}
+fx<-function(x){
+  return(2^x-3^x+1)
+}
+for (i in 1:length(x)){
+  result[1,i]=halley1(f,x[i], tol = 1e-9, max.iter = 100)[2]
+  result[2,i]=halley1(f, x[i], tol = 1e-9, max.iter = 100)[1]
+  result[3,i]=halley2(fx,x[i], tol = 1e-9, max.iter = 100)[2]
+  result[4,i]=halley2(fx, x[i], tol = 1e-9, max.iter = 100)[1]
+ }
+print (result)
+
+
+```
+
+The true value of function 3 is 1
+
+4)) log(x) - exp(x) with x0=2,4,6
+Methods raise errors since there is no true root. From the graph of the function we can see clearly that the maximum of the function is below zero, so there is no true root existed. 
+
+5)) $x^3-7\times x^2+14\times x-8$ with x0=1.1,1.2,..,1.9
+```{r}
+ftnxtrip<-function(x){
+  result=FindDeriv(fx5,x)
+  return(result)
+}
+fx5<-function(x){
+  return(x^3-7*x^2+14*x-8)
+}
+x5=c(1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9)
+comparison(ftnxtrip,x5,fx5)
+cat("True root is 1,2,and 4\n")
+```
+
+6)) (sinxcosx)/(tanx+secx) with x0=1,2,3
+```{r}
+ftnxtri<-function(x){
+  result=FindDeriv(fx6,x)
+  return(result)
+}
+fx6<-function(x){
+  return (sin(x)*cos(x)/(tan(x)+1/cos(x)))
+}
+x6=c(1,2,3)
+comparison(ftnxtri,x6,fx6)
+cat("True root is",pi/2,"and",pi,"\n")
+```
+
+I would prefer to use halley2 function to find roots. Because from the observation of comparison results, halley is always faster than newtonraphson method, which shows more efficiency in running programs. Moreover, halley2 takes a simple ftn function without its derivatives(the first and the second), which allows taking more general functions as the first argument.As for specialized cases, take the third one for example,where the first derivative is close to 0, halley function can show the correct answer so I would prefer to use it. Under circumstances where there is no true root, no method can work. 
+
+cite: work with Rui Chen
+
+
+

@@ -1,0 +1,85 @@
+---
+title: "writeup two"
+author: "Tian Tan"
+date: "May 10, 2016"
+output: pdf_document
+---
+
+Problem 2
+
+2a.Fit a simple linear regression model to the data. Display the fitted model on a scatterplot of the data.
+```{r}
+dataN=data.frame("nitrogen"= c(rep(0,4),rep(30,4),rep(60,4),rep(90,4),rep(120,4)),
+           "yield"=c(1.41,1.75,2.02,2.13,1.93,2.24,2.29,2.35,2.12,2.38,
+                     2.49,2.57,2.16,2.20,2.28,2.49,2.34,2.45,2.59,2.62))
+model=lm(yield~nitrogen, dataN)
+summary(model)
+plot(dataN$nitrogen,dataN$yield,main="nitrogen & yield model",col="black")
+lines(dataN$nitrogen,model$fitted.values,col="blue")
+```
+
+2b. Determine the form of the gradient vector of the model function $f(x,\theta) =\beta_0+\beta_1 min(x,N_{max})$ with respect to the parameter $\theta=\beta_0+\beta_1 min(x, N_{max})$.
+
+So for $x<N_{max}$, $f(x,\theta)=\beta_0+\beta_1 x$, $\frac{df(x,\theta)}{d\theta_3} = 0$;
+
+For $x>N_{max}$, $f(x,\theta)=\beta_0+\beta_1 \cdot N_{max}$, $\frac{df(x,\theta)}{d\theta_3}=\theta_2=\beta_1$;
+
+So in conclusion, the gradient vector form is $\Delta f(x,\theta)=-(1, min(x,N_{max}),\beta_1 \cdot ((N>=N_{max})==1)$
+
+2c. LPmodel function 
+```{r}
+LPmodel<-function(Y,N,tol=1e-5,maxiter=100){
+  ## compute starting values inside the function
+  ## del=change in sum of squares between iterations
+  beta0=1.95550
+  beta1=0.00475
+  Nmax=max(N)-5
+  theta=c(beta0,beta1,Nmax)
+  
+  fn<-function(t,x){
+    # t is theta, x is the function variable
+    return(t[1]+t[2]*pmin(x,t[3]))
+  }
+  dfn<-function(t,x){
+    return(cbind(1,pmin(x,t[3]),t[2]*((x>=t[3])==TRUE)))
+  }
+  
+  
+  tol.met=FALSE
+  iter=0
+  del=0
+  while(!tol.met){
+    iter=iter+1
+    oldtheta=theta
+    f=fn(theta,N)
+    g=dfn(theta,N)
+    theta=theta+solve(t(g)%*%g,t(g)%*%(Y-f))
+    fnew=fn(theta,N)
+    del[iter]=sum((Y-f)^2)-sum((Y-fnew)^2)
+    if (max(abs(theta-oldtheta))<tol|iter> maxiter){
+      tol.met=TRUE
+    }
+  }
+  return(list(b0=theta[1],b1=theta[2],Nmax=theta[3],iter=iter,del=del))
+}
+```
+
+2d. Display the fitted model on the scatterplot. Use different colors for the simple linear regression and linear plateau model fits and indicate which is which using a legend.
+```{r}
+result=LPmodel(dataN$yield,dataN$nitrogen)
+X=seq(1,120)
+f=result$b0+result$b1*pmin(X,result$Nmax)
+plot(dataN$nitrogen,dataN$yield,main="nitrogen & yield model",col="black")
+lines(dataN$nitrogen,model$fitted.values,col="blue")
+lines(X,f,col='red')
+legend("bottomright",c("data","simple linear model","plateau models"),lty=c(1,1),lwd=c(2.5,2.5), col=c("BLACK","BlUE","RED"))
+```
+
+
+
+
+
+
+
+
+

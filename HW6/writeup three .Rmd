@@ -1,0 +1,148 @@
+---
+title: "writeup three"
+author: "Tian Tan"
+date: "May 1, 2016"
+output: pdf_document
+---
+
+
+1.By considering $P[Xmax\leq x]$ or otherwise, derive the cumulative distribution function of $F_{X_{max}}(x)$
+
+Since $F_{X_{max}}$=$P[X_{max}\leq x]$, so for all $X \in {X_1,....X_n}$, $F_{X-{max}}=P[X\leq X_{max} \leq x]$,so $F_{X_{max}}=F_{X_1} \cdot F_{X_2} \cdot ...\cdot F_{X_n}$
+
+$F_{X_{max}}= \prod_{i=1}^N F_{X_i}$
+
+2. Derive the cumulative didstribution function of $F_{X_{min}}(x)$ 
+
+Since $F_{X_{min}}=P[X_{min}\leq x]=1-P[X_{min}> x]$, for all $X \in {X_1,....X_n}$, so $F_{X_{min}}=1-P[X\geq X_{min} > x]=1-(1-F_{X_1})(1-F_{X_2})...(1-F_{X_N})$ 
+
+$F_{X_{min}}= 1-\prod_{i=1}^N (1-F_{X_i})$
+
+3. Write down the steps of an algorithm (using the inverse transform) to generate $X_{max}$ and $X_{min}$ for any arbitrary $X_1,...,X_n$.
+
+Steps:
+
+To generate $X_{max}$:
+
+1) generate $F_{X_{max}}$,then by the inverse transformation method, $X_{max}=F^{-1}_{X_{max}}$
+
+2) generate $F_{X_{min}}$, then by the inverse transformation method, $X_{min}=F^{-1}_{X_{min}}$
+
+4. Inverse_gen
+```{r}
+inverse_gen<-function(num_var, N, lambda){
+  # num_var: The number of Xmax random variables wanted from the distribution given by FXmax
+  # N: The total number of exponential random variables Xi, such that we want to find Xmax = 
+  # max{X1,...,XN}
+  # lambda: The rate of these exponential random variables
+  library(pracma)
+  vec_max=rep(0,num_var)
+  Fx=runif(num_var,0,1)
+  for (i in 1:num_var){
+    Fmax=nthroot(Fx[i],N)
+    Xmax=log(1-Fmax)/(-lambda)
+    vec_max[i]=Xmax
+  }
+  return(vec_max)
+}
+```
+
+
+5. Given some p, a, write down how you would use the inverse transform method to simulate variables from $f_a$ and $\bar{f_a}$. You can assume we will be using the exponential distribution here.
+
+\begin{eqnarray*}
+f_a &=& \frac{\lambda e^{-\lambda x}}{p} for \ x>a \\
+Suppose \ f_a &=& U_1 \\
+Then \ \frac{\lambda e^{-\lambda x}}{p} &=& U_1 \\
+      X &=& -\frac{1}{\lambda} log(\frac{U_1p}{\lambda}) \\
+\bar{f_a} &=& \frac{\lambda e^{-\lambda x}}{1-p} for \ x \leq a \\
+Suppose \ \bar{f_a} &=& U_2 \\
+      X &=& -\frac{1}{\lambda}log(\frac{U_2(1-p)}{\lambda})
+\end{eqnarray*}
+
+6. Given the description of the above algorithm, what heuristics would you use to pick a suitable p (and thus a)?
+
+Since we are trying to change the original exponential distribution into a simpler binomial distribution, it is better to let the tail densities $f_a$ and $\bar{f_a}$ to be close to avoid biases. So a number close to 0.5 might be a suitable p. Thus a=log(p)/(-2)=some number close to 0.3465736.
+
+7. Proposed_gen
+```{r}
+proposed_gen<-function(num_var, N, lambda, a){
+  # num_var: The number of Xmax random variables wanted from the distribution given by FXmax
+  # N: The total number of exponential random variables Xi, such that we want to find Xmax = 
+  # max{X1  ,...,XN}
+  # lambda: The rate of these exponential random variables
+  p=1-(1-exp(-lambda*a))
+  vec_max=rep(0,num_var)
+  p=1-pexp(a,lambda) 
+  b=rbinom(1,N,p)
+  for (k in 1:num_var){
+     if (b==0){
+        num=0
+        X=0
+        while (num!=N){
+          fx=runif(1,0,1)
+          f_a_bar=fx/(1-p)
+          X_i=log((1-p)*f_a_bar/lambda)/(-lambda)
+          if (X<a){
+            num=num+1
+            X[num]=X_i
+          } 
+        }
+        vec_max[k]=max(X)
+     } else{
+         fx=runif(b,0,1)
+         f_a=fx/p
+         X=log(p*f_a/lambda)/(-lambda)
+         vec_max[k]=max(X)
+    }
+  }
+  return(vec_max)
+}
+```
+
+8.Compare the time taken using these two different algorithms, by generating random variables from FXmax, where each Xi is i.i.d. exponential distributed with fixed $\lambda$.
+```{r,eval=FALSE}
+compare<-function(num_var, N, lambda,a){
+  
+  tic = proc.time()[3]
+  inverse=inverse_gen(num_var,N,lambda)
+  time1 = proc.time()[3] - tic 
+
+  tic = proc.time()[3]
+  proposed=proposed_gen(num_var,N,lambda,a)
+  time2 = proc.time()[3] - tic 
+
+  time=c(time1,time2)
+  estimate=c(mean(inverse),mean(proposed))
+  variance=c(var(inverse),var(proposed))
+  result=rbind(time,estimate,variance)
+  colnames(result)=c("inverse","proposed")
+
+  return(result)
+}
+
+
+outcome1=compare(1000,1000,2,log(0.5)/(-2))
+outcome2=compare(10000,1000,2,log(0.5)/(-2))
+outcome3=compare(1000,10000,2,log(0.5)/(-2))
+outcome4=compare(10000,10000,2,log(0.5)/(-2))
+save(outcome1,outcome2,outcome3,outcome4,
+     file="~/Documents/Cornell/Statistical computing/HW6/outcome.rData")
+```
+
+```{r}
+load(file="~/Documents/Cornell/Statistical computing/HW6/outcome.rData")
+outcome1
+outcome2
+outcome3
+outcome4
+```
+From the outcomes, we can tell that in general the proposed gen method takes longer time (except for the first small sample size) but have slightly smaller variance, which means it is a little more accurate in estimating the Xmax. Also from the outcome2 and outcome4, which has the larger number of Xmax generated and thus has more accuracy, we can find that the proposed gen has slightly smaller value. 
+
+
+
+Cite: work with Rui Chen, rc687
+
+
+
+

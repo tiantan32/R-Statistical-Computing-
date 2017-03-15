@@ -1,0 +1,103 @@
+---
+title: "writeup one"
+author: "Tian Tan"
+date: "May 9, 2016"
+output: pdf_document
+---
+
+Problem 1
+
+1a. Show that the sum of two independent gamma variables with the same rate parameter but different shape parameters is also gamma. Hence determine the distribution of the total survival time for 10 matched controls.
+
+$f_{U_1}$ be the density function of $U_1$, and $f_{U_2}$ be the density function of $U_2$. 
+
+The density function of gamma distribution is 
+\begin{eqnarray*}
+f(y) &=& \frac{\beta ^{\alpha} y^{\alpha-1} e^{-\beta y}}{\Gamma(\alpha)}, y>0
+\end{eqnarray*}
+
+Y=$U_1+U_2$. Then
+\begin{eqnarray*}
+f_Y(y) &=& \int_{0}^{y} f_{U_1}(u_1)f_{U_2}(y-u_1)du_1 \\
+       &=& \int_{0}^{y} \frac{\beta ^{\alpha_1} \mu_1 ^{\alpha_1-1} e^{-\beta \mu_1}}{\Gamma(\alpha_1)} \frac{\beta ^{\alpha_2} (y-\mu_1)^{\alpha_2-1} e^{-\beta (y-\mu_1)}}{\Gamma(\alpha_2)} d \mu_1 \\
+       &=& \beta^{\alpha_1+\alpha_2} e^{-\beta y}  \int_{0}^{y} \frac{\mu_1^{\alpha_1-1}(y-\mu_1)^{\alpha_2-1}}{\Gamma(\alpha_1)\Gamma(\alpha_2)} d\mu_1 \  substitute \ \mu_1=yt \\
+       &=& \beta^{\alpha_1+\alpha_2} e^{-\beta y} y^{\alpha_1+\alpha_2-1} \int_{0}^{1} \frac{t^{\alpha_1-1}(1-t)^{\alpha_2-1}}{\Gamma(\alpha_1) \Gamma(\alpha_2)} dt
+\end{eqnarray*}
+Since the $\beta$ function of the random variable $y~Beta(\alpha_1,\alpha_2)$ ensures the total probability integrates to 1, we have
+\begin{eqnarray*}
+\int_{0}^1 \frac{\Gamma(\alpha_1 +\alpha_2 )}{\Gamma(\alpha_1) \Gamma(\alpha_2)} t^{\alpha_1-1}(1-t)^{\alpha_2-1} dt =1
+\end{eqnarray*}
+So
+\begin{eqnarray*}
+f_Y(y) &=& \frac{\beta^{\alpha_1+\alpha_2}}{\Gamma(\alpha_1+\alpha_2)}e^{-\beta y} y^{\alpha_1+\alpha_2-1}
+\end{eqnarray*}
+So the sum of two independent gamma variables with the same rate parameter but different shape parameters is also gamma.
+
+The distribution of the total survival time for 10 matched controls is also Gamma distribution, with shape parameter equals to $\sum_{i=1}^{10} \alpha_i =10$, where $\alpha_i$ is the $i_{th}$ shape parameter of each individual matched control,which is 1, and the rate parameter equals to $\beta_2$ 
+
+1b. Write down the likelihood function for the ovarian survival data. Show that $(\sum (y_{i1}), \sum (y_{i2}))$ are sufficient statistics for the two rate parameters.
+
+Since the survival times of these individuals are independent exponential random variables, the shape parameter of each survival time is 1, and the shape parameter of the sum of survival time is 10. 
+
+n=6
+
+For parameter $\beta_1$:
+\begin{eqnarray*}
+f(y_{11},...,y_{i1},...,y_{12},...,y_{i2},...|\beta_1,\beta_2) &=& \beta_1 e^{-\beta_1 y_{i1}} \times \frac{\beta_2^{10}}{\Gamma(10)} (y_{i2})^10 e^{-\beta_2 y_{i2}} \\
+L(\beta_1,\beta_2) &=& \prod \beta_1 e^{-\beta_1 y_{i1}} \prod \frac{\beta_2^{10}}{\Gamma(10)}y^9 e^{-\beta_2 y_{i2}}  \\
+           &=& \beta_1 ^{6} e^{-\beta_1 \sum y_{i1}} (\frac{\beta_2^{10}}{\Gamma(10)})^6 \prod (y_{i2})^9 e^{-\beta_2 \sum y_{i2}} 
+\end{eqnarray*}
+According to the Factorization Theorem,$L(\beta_1,\beta_2)=u(\sum y_{i1},\sum y_{i2})$ and $h(y_1,y_2,...y_n)=\prod y_{i2}^9$, we have $(\sum y_{i1},\sum y_{i2})$ as sufficient statistics. 
+
+
+
+1c.Consider a Bayesian model with independent Gamma(a,b) priors on the two rate parameters (for the vitamin C and control groups). Determine the posterior distributions of $\beta_1$ and $\beta_2$.
+
+For $\beta_1$
+\begin{eqnarray*}
+L(y1|\theta) &=& \prod \theta e^{-\theta y_{i1}} \\
+  &=& \theta^n e^{-\theta \sum y_{i1}} \\
+p(\theta) &=& \frac{b^a}{\Gamma(a)} \theta^{a-1} e^{-b\theta} \\
+p(\theta|y1) &\propto& p(y1|\theta)p(\theta) \\
+            &\propto& \theta^{n+a-1} e^{-\theta(b+\sum y_{i1})}
+\end{eqnarray*}
+n=6
+
+So the distribution of $\beta_1$ is $\beta_1~Gamma(a+6,b+\sum y_{i1})$
+
+For $\beta_2$
+\begin{eqnarray*}
+L(y2|\theta) &=& \prod \frac{\theta^{10}}{\Gamma(10)}y^9 e^{-\theta y_{i2}} \\
+             &=& (\frac{\theta^{10}}{\Gamma(10)})^n \prod (y_{i2})^9 e^{-\theta \sum y_{i2}} \\
+p(\theta) &=& \frac{b^a}{\Gamma(a)} \theta^{a-1} e^{-b\theta} \\
+p(\theta|y2) &\propto& p(y2|\theta)p(\theta) \\
+            &\propto& \theta^{10n+a-1} e^{-\theta(b+\sum y_{i2})}
+\end{eqnarray*}
+n=6
+
+So the distribution of $\beta_2$ is $\beta_2~Gamma(a+60,b+\sum y_{i2})$
+
+1d. Simulate the posterior distribution of the ratio of mean survival times ($\beta_1/\beta_2)$ for the vitamin C and control groups when a = b = 0.1. Construct a histogram of this distribution and determine a 95% posterior credible interval for the ratio.
+```{r}
+#load the data
+ovarian=read.csv("ovarian.csv") 
+sum_y1=sum(ovarian$VitC)
+sum_y2=sum(10*ovarian$Ctrl)
+#simulate the posterior distribution of beta1 and beta2
+beta1=rgamma(1000,6.1,(0.1+sum_y1))
+beta2=rgamma(1000,60.1,(0.1+sum_y2))
+ratio=beta1/beta2
+#construct histogram
+hist(ratio,main="ratio of mean survival times",freq=FALSE)
+#lower quantile and higher quantile
+lquan=quantile(ratio,0.025)
+hquan=quantile(ratio,0.975)
+#95% posterior credible interval for the mean survival times ratio
+c(lquan,hquan)
+```
+
+1e. Does there appear to be significant difference between the survival rates for the two groups? Briefly explain your answer.
+
+No, there doesn't appear to be significant difference between the two group survival rates, since 1 is not included in the 95% posterior credible interval for the mean survival times ratio. 
+
+
